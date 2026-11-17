@@ -1,0 +1,30 @@
+[
+  {
+    "task": "sort_nesting_dolls_by_size",
+    "episode": 0,
+    "reused": false,
+    "raw_sha256": "3e7c01d7b4cf55fb6558c3aab729c82868e10ddd4c89b5b7ae9b4c5a1abe60a6",
+    "effective_sha256": "6bd217383a1f9dd9d6e3be928b689d979416db743e9490d9e8077a9e86aab91d",
+    "plan_sha256": "69d29573e0366d7eefb17d7f036f5ba0a046df9f61ffaf1fee5c77cd890588c8",
+    "outside_pixels_checked": 235336,
+    "outside_pixels_changed": 0,
+    "service_calls": 9,
+    "cleanup_elapsed_seconds": 9.367606032996264,
+    "reached_scene_request": true,
+    "task_planning": "scripted_fixture"
+  },
+  {
+    "task": "sort_nesting_dolls_by_size",
+    "episode": 0,
+    "reused": true,
+    "raw_sha256": "3e7c01d7b4cf55fb6558c3aab729c82868e10ddd4c89b5b7ae9b4c5a1abe60a6",
+    "effective_sha256": "6bd217383a1f9dd9d6e3be928b689d979416db743e9490d9e8077a9e86aab91d",
+    "plan_sha256": "69d29573e0366d7eefb17d7f036f5ba0a046df9f61ffaf1fee5c77cd890588c8",
+    "outside_pixels_checked": 235336,
+    "outside_pixels_changed": 0,
+    "service_calls": 0,
+    "cleanup_elapsed_seconds": null,
+    "reached_scene_request": true,
+    "task_planning": "scripted_fixture"
+  }
+]
