@@ -13,6 +13,7 @@ identity and calibrated defaults belong to `embodichain.extensions.robots`.
 | Explicit hand geometry capture and lazy paired grasp ownership | `embodichain/lab/sim/utility/grasp_geometry.py` |
 | Config decoding, construction hooks, backend alternatives | `embodichain/lab/sim/cfg/robot.py` → `RobotCfg`, `RobotPresetCfg` |
 | Available robot configs and variants | `embodichain/extensions/robots/_catalog.py`; `embodichain/extensions/robots/__init__.py` owns lazy exports |
+| CobotMagic arm variants and shared simulation/IK position limits | `embodichain/extensions/robots/agilex/cobotmagic/cfg.py` → [arm variant configuration](../../../docs/source/resources/robot/agilex/cobotmagic.md#arm-variants) |
 | YAM dual-arm defaults and source-aligned FK/IK | `embodichain/extensions/robots/i2rt/yam/cfg.py` → [model and asset usage](../../../docs/source/resources/robot/i2rt/yam.md) |
 | JSON-backed locomotion assets, standing poses, drives and reference frames | `embodichain/extensions/robots/locomotion_profiles.py` reads each vendor/model's `profile.json`; model packages own `cfg.py` and `assets.py` |
 | RoboParty RPO, RP1 variants and standalone RP Hand | `embodichain/extensions/robots/roboparty/` owns source archives and URDF-backed joint defaults |

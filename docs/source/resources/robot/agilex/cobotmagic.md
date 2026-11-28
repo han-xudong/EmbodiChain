@@ -76,6 +76,39 @@ sim.update(step=1)
 - **joint_drive_props**: Joint drive properties (stiffness, damping, max effort, etc.)
 - **attrs**: Rigid body physical attributes (mass, friction, damping, etc.)
 
+### Arm variants
+
+Set `arm_variant` to match the arm hardware. The position limits below are in
+radians and apply to both arms.
+
+| Variant | When to use | J5 | J6 |
+| --- | --- | --- | --- |
+| `legacy` (default) | Existing hardware with the standard V100 asset | −1.22 to 1.22 | −2.0944 to 2.0944 |
+| `competition` | RoboSynChallenge hardware with the wider wrist range | −1.3 to 1.3 | −2.988 to 2.988 |
+
+`legacy` reads the limits from the resolved V100 URDF. `competition` uses a
+cached URDF derived from the same asset with the wider J5 and J6 limits. The
+selected URDF supplies the position limits for both simulation and inverse
+kinematics.
+
+In Python, select the variant when constructing the configuration.
+
+```python
+from embodichain.extensions.robots import CobotMagicCfg
+
+legacy_cfg = CobotMagicCfg.from_dict({"arm_variant": "legacy"})
+competition_cfg = CobotMagicCfg.from_dict({"arm_variant": "competition"})
+```
+
+In a task embodiment YAML, set the same field under `simulation`.
+
+```yaml
+simulation:
+  class_type: CobotMagic
+  uid: CobotMagic
+  arm_variant: competition
+```
+
 ### 2. Custom Usage Example
 
 ```python

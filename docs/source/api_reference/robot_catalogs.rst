@@ -116,6 +116,14 @@ Concrete robot configurations, exposed lazily from the bundled robot package.
    the robot-specific differentiable kinematic chains. Generic runtime
    fields and backend selection follow ``RobotCfg``.
 
+   .. py:attribute:: arm_variant
+      :type: Literal["legacy", "competition"]
+      :value: "legacy"
+
+      Select the V100 arm limits for simulation and inverse kinematics.
+      Pass the value to ``from_dict()`` or set it in the task embodiment YAML.
+      See :doc:`/resources/robot/agilex/cobotmagic` for the two ranges.
+
 .. py:class:: embodichain.extensions.robots.AgilexPiperXCfg
 
    Fixed-base PiPER-X bare arm with six joints in the ``arm`` control group.
