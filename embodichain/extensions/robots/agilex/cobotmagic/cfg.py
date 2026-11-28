@@ -20,7 +20,7 @@ import torch
 import numpy as np
 import re
 
-from typing import TYPE_CHECKING, Dict, List, Union
+from typing import TYPE_CHECKING, Dict, List, Literal, Union
 
 from embodichain.lab.sim.cfg import (
     ArticulationRootPropertiesCfg,
@@ -36,6 +36,8 @@ from embodichain.lab.sim.utility.cfg_utils import merge_robot_cfg
 from embodichain.data import get_data_path
 from embodichain.utils import configclass
 from embodichain.utils import logger
+
+from .assets import _competition_urdf
 
 if TYPE_CHECKING:
     import pytorch_kinematics as pk
@@ -57,11 +59,14 @@ class CobotMagicCfg(RobotCfg):
 
     Caller drive patterns replace matching defaults, retaining defaults for
     other joints. Control-part overrides remain usable alongside direct rules.
+    Set ``arm_variant="competition"`` for the RoboSynChallenge J5/J6 position
+    range. The default ``"legacy"`` follows the resolved V100 asset.
     """
 
     urdf_cfg: URDFCfg = None
     control_parts: Dict[str, List[str]] | None = None
     solver_cfg: Dict[str, "SolverCfg"] | None = None
+    arm_variant: Literal["legacy", "competition"] = "legacy"
 
     @classmethod
     def from_dict(cls, init_dict: Dict[str, Union[str, float, int]]) -> CobotMagicCfg:
@@ -111,6 +116,11 @@ class CobotMagicCfg(RobotCfg):
         from embodichain.lab.sim.sensors import CameraCfg
 
         init_dict = init_dict or {}
+        self.arm_variant = init_dict.get("arm_variant", "legacy")
+        if self.arm_variant not in ("legacy", "competition"):
+            raise ValueError(
+                "CobotMagic arm_variant must be 'legacy' or 'competition'."
+            )
         self.sensors = [
             CameraCfg(
                 uid=f"cam_{side}_wrist",
@@ -132,6 +142,8 @@ class CobotMagicCfg(RobotCfg):
             for side in ("right", "left")
         ]
         arm_urdf = get_data_path("CobotMagicArm/CobotMagicWithGripperV100.urdf")
+        if self.arm_variant == "competition":
+            arm_urdf = _competition_urdf(arm_urdf)
         left_arm_xpos = np.array(
             [
                 [1.0, 0.0, 0.0, 0.233],
@@ -270,16 +282,6 @@ class CobotMagicCfg(RobotCfg):
             ),
         )
 
-    @property
-    def _pk_urdf_path(self) -> str:
-        """URDF used for FK/IK serial chains (arm-only, gripper-stripped).
-
-        .. attention::
-            The root_link->end_link kinematics here must match the arm in the
-            simulation URDF. A DOF drift guard in the tests checks this.
-        """
-        return get_data_path("CobotMagicArm/CobotMagicNoGripper.urdf")
-
     def build_pk_serial_chain(
         self, device: torch.device = torch.device("cpu"), **kwargs
     ) -> Dict[str, "pk.SerialChain"]:
@@ -287,21 +289,15 @@ class CobotMagicCfg(RobotCfg):
             create_pk_serial_chain,
         )
 
-        urdf_path = self._pk_urdf_path
-
-        left_arm_chain = create_pk_serial_chain(
-            urdf_path=urdf_path,
-            device=device,
-            end_link_name="link6",
-            root_link_name="base_link",
-        )
-        right_arm_chain = create_pk_serial_chain(
-            urdf_path=urdf_path,
-            device=device,
-            end_link_name="link6",
-            root_link_name="base_link",
-        )
-        return {"left_arm": left_arm_chain, "right_arm": right_arm_chain}
+        return {
+            part: create_pk_serial_chain(
+                urdf_path=self.urdf_cfg.components[part]["urdf_path"],
+                device=device,
+                end_link_name="link6",
+                root_link_name="base_link",
+            )
+            for part in ("left_arm", "right_arm")
+        }
 
 
 if __name__ == "__main__":

@@ -1383,6 +1383,37 @@ def test_cobotmagic_from_dict_and_roundtrip():
     assert isinstance(cfg2.solver_cfg["left_arm"], OPWSolverCfg)
 
 
+@pytest.mark.parametrize(
+    ("variant", "expected"),
+    [
+        ("legacy", (1.22, 2.0944)),
+        ("competition", (1.3, 2.988)),
+    ],
+)
+def test_cobotmagic_variant_matches_simulation_and_ik_limits(
+    variant: str, expected: tuple[float, float]
+) -> None:
+    """Use the selected simulation arm limits for both kinematic chains."""
+    cfg = CobotMagicCfg.from_dict({"arm_variant": variant})
+    restored = CobotMagicCfg.from_dict(cfg.to_dict())
+    assert restored.arm_variant == variant
+
+    chains = restored.build_pk_serial_chain()
+    for part in ("left_arm", "right_arm"):
+        source = restored.urdf_cfg.components[part]["urdf_path"]
+        joints = ET.parse(source).getroot()
+        limits = []
+        for axis in range(1, 7):
+            node = joints.find(f"joint[@name='joint{axis}']/limit")
+            assert node is not None
+            limits.append((float(node.get("lower")), float(node.get("upper"))))
+        lower, upper = zip(*limits)
+        assert lower[-2:] == pytest.approx([-limit for limit in expected])
+        assert upper[-2:] == pytest.approx(expected)
+        assert list(chains[part].low) == pytest.approx(lower)
+        assert list(chains[part].high) == pytest.approx(upper)
+
+
 def test_cobotmagic_arm_effort_and_conservative_joint_velocity_limits() -> None:
     """Retain source torque bounds and cap speed by the stricter reference."""
     cfg = CobotMagicCfg.from_dict({})

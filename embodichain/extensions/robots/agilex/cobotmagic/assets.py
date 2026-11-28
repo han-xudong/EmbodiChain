@@ -19,6 +19,10 @@
 from __future__ import annotations
 
 import os
+from hashlib import sha256
+from pathlib import Path
+from xml.etree import ElementTree as ET
+
 import open3d as o3d
 from embodichain.data.dataset import EmbodiChainDataset
 from embodichain.data.constants import (
@@ -26,9 +30,49 @@ from embodichain.data.constants import (
     EMBODICHAIN_DEFAULT_DATA_ROOT,
 )
 
+from .._arm_assets import _write_atomic
+
 __all__ = ["CobotMagicArm"]
 
 robot_assets = "robot_assets"
+
+_COMPETITION_POSITION_LIMITS = {
+    "joint5": ("-1.3", "1.3"),
+    "joint6": ("-2.988", "2.988"),
+}
+
+
+def _competition_urdf(source_path: str) -> str:
+    """Resolve the RoboSynChallenge arm range using the V100 asset geometry."""
+    source = Path(source_path).resolve()
+    arm = ET.parse(source).getroot()
+    for name, (lower, upper) in _COMPETITION_POSITION_LIMITS.items():
+        limit = arm.find(f"joint[@name='{name}']/limit")
+        if limit is None:
+            raise ValueError(f"CobotMagic source has no position limits for {name}.")
+        limit.set("lower", lower)
+        limit.set("upper", upper)
+
+    for mesh in arm.iter("mesh"):
+        filename = mesh.get("filename")
+        if not filename or Path(filename).is_absolute():
+            continue
+        path = source.parent / filename
+        if not path.is_file() and filename.startswith("../"):
+            path = source.parent / filename.removeprefix("../")
+        mesh.set("filename", str(path.resolve()))
+
+    contents = ET.tostring(arm, encoding="utf-8", xml_declaration=True)
+    digest = sha256(contents).hexdigest()[:16]
+    destination = (
+        Path(EMBODICHAIN_DEFAULT_DATA_ROOT)
+        / "generated"
+        / "CobotMagicArm"
+        / f"competition-{digest}.urdf"
+    )
+    if not destination.is_file() or destination.read_bytes() != contents:
+        _write_atomic(destination, contents)
+    return str(destination)
 
 
 class CobotMagicArm(EmbodiChainDataset):
